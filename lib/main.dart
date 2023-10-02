@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'start/SplashScreen.dart';
 import 'package:flutter/services.dart';
 
+
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);

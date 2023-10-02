@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 import '../customlibrary/textanimation.dart';
+import '../server/http_post.dart';
 import '../user/User_Storage.dart';
 import 'editmypage.dart';
 import 'mainpage.dart';
@@ -19,7 +20,6 @@ class _mypageUI extends State<mypageUI> {
   bool isloading = true;
 
   late Map<String, dynamic> _userdata;
-  late Map<String, dynamic> _transdata;
   late String _usernick;
   late int _trannum;
 
@@ -28,14 +28,20 @@ class _mypageUI extends State<mypageUI> {
       Get.to(()=>editmy(), arguments: _usernick, transition: Transition.rightToLeft,
           duration: Duration(milliseconds: 500));
     }
+    else if(where == "usagedetailpage")
+    {
+
+    }
   }
 
   void getdata() async {
     _userdata = (await getUserData())!;
-    _transdata = (await getTransData())!;
-    _trannum = _transdata['sales'] + _transdata['buy'];
-    _trannum = 13;
     _usernick = _userdata['nickname'];
+
+    Map<String, dynamic> _user_profile = (await Other_Profile(_userdata["phonenumber"]))!;
+    _trannum = int.parse(_user_profile['point']);
+
+
     setState(() {
       isloading = false;
     });

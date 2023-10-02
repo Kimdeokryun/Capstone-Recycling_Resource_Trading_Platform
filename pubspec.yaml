@@ -70,6 +70,11 @@ dependencies:
   share_plus: ^7.0.2
   intl: ^0.17.0
   share: ^2.0.4
+  url_launcher: ^6.1.11
+  geolocator: ^10.1.0
+  geocoding: ^2.1.0
+  permission_handler: ^11.0.0
+  fluttertoast: ^8.2.2
 
 dev_dependencies:
   flutter_test:
@@ -122,12 +127,21 @@ flutter:
   assets:
     - assets/
     - assets/image/
+    - assets/image/how/glass/
+    - assets/image/how/metal/
+    - assets/image/how/paper/
+    - assets/image/how/plastic/
+    - assets/image/how/poly/
+    - assets/image/how/vinyl/
+    - assets/image/how/ecocycle/
     - assets/image/eco.png
     - assets/image/수거요청.png
     - assets/image/어떻게버릴까.png
     - assets/image/1.png
     - assets/image/2.png
     - assets/image/3.png
+    - assets/image/아이템1.png
+    - assets/image/아이템2.png
     - assets/logo/
     - assets/sound/camera_shutter.mp3
     - assets/image/splashimage.png

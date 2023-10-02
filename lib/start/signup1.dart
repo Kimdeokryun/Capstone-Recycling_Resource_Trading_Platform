@@ -58,8 +58,7 @@ class _signup1 extends State<signup1> {
       Connecterror().showErrorDialog(context);
     }
     else{
-      //user_in = await check_signup();
-      user_in = true;
+      user_in = await check_signup();
       if(user_in == false){
         Inusererror().showErrorDialog(context);
       }

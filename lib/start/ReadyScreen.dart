@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ecocycle/start/welcome.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +11,6 @@ import '../user/User_Storage.dart';
 import '../server/http_post.dart';
 import '../main/mainpage.dart';
 import 'package:get/get.dart';
-import 'explainpage.dart';
 import 'dart:io';
 
 class readypage extends StatefulWidget {
@@ -60,7 +62,9 @@ class _readypage extends State<readypage> {
     userInfo = await storage.read(key: 'login');
     // user의 정보가 있다면 로그인 후 들어가는 첫 페이지로 넘어가게 합니다.
     if (userInfo != null) {
-      print('로그인 완료');
+      await post_login(1, jsonDecode(userInfo)["username"], jsonDecode(userInfo)["password"]);
+      print("토큰 갱신 완료");
+
       next = 1;
     } else {
       print('로그인이 필요합니다');
@@ -86,10 +90,10 @@ class _readypage extends State<readypage> {
     if (next == 1) {
       Get.offAll(() => mainpage(),
           transition: Transition.native,
-          duration: Duration(milliseconds: 500));
+          duration: Duration(milliseconds: 500), arguments: [2]);
     }
     else {
-      Get.offAll(() => explain(),
+      Get.offAll(() => Welcome(),
           transition: Transition.native,
           duration: Duration(milliseconds: 500));
     }

@@ -186,7 +186,7 @@ class _login extends State<login> {
           ),
         ),
         body:
-        isloading ? Center(child: BouncingTextAnimation()):
+        isloading ? Container(color: Colors.white,child: Center(child: BouncingTextAnimation()),):
         SafeArea(
             child: Container(
                 color: Colors.white,

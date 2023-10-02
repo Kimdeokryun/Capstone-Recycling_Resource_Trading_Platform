@@ -1,3 +1,4 @@
+import 'package:ecocycle/notice/noticepage.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +7,15 @@ import '../collection/resource_transaction.dart';
 import 'package:get/get.dart';
 
 import '../customlibrary/textanimation.dart';
+import '../server/http_post.dart';
 import '../user/Trans_grade.dart';
 import '../user/User_Storage.dart';
 import 'dart:ui';
 
 import 'ReadytoPage.dart';
+import 'package:ecocycle/how/howpage.dart';
+import 'package:ecocycle/mall/mainmallpage.dart';
+
 
 class mainpageUI extends StatefulWidget {
   @override
@@ -32,7 +37,6 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
   late AnimationController _controller5;
 
   late Map<String, dynamic> _userdata;
-  late Map<String, dynamic> _transdata;
   late String _usernick;
   late double ecopercent;
   late List<String> ecoGrade;
@@ -46,25 +50,28 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
   void movepage(where) {
     if(where == "about"){}
     else if(where == "how"){
-      Get.to(() => readytopage(), arguments: "이건 어떻게 버릴까?");
+      Get.to(() => howpage());
     }
     else if (where == "collection") {
-      print("gototransactoinpage");
       Get.to(() => transactionpage());
     } else if (where == "mall") {
-      Get.to(() => readytopage(), arguments: "제품몰");
+      Get.to(() => mainmallpage());
+    }
+    else if(where == "notice")
+    {
+      Get.to(() => noticepage(), arguments: ["공지사항"]);
     }
   }
 
   void getdata() async {
     _userdata = (await getUserData())!;
-    _transdata = (await getTransData())!;
     _usernick = _userdata['nickname'];
-    int _trannum = _transdata['sales'] + _transdata['buy'];
-    _trannum = 13;
+
+    Map<String, dynamic> _user_profile = (await Other_Profile(_userdata["phonenumber"]))!;
+    int _trannum = int.parse(_user_profile['point']);
+
     ecoGrade = getEcoGrade(_trannum);
     ecopercent = (_trannum % 10) / 10;
-    print(ecopercent);
     setState(() {
       isloading = false;
     });
@@ -124,7 +131,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       SystemChrome.setSystemUIOverlayStyle(overlayStyle);
     });
 
-    return isloading ?  Center(child: BouncingTextAnimation()) : mainappbar();
+    return isloading ?  Container(color: Colors.white,child: Center(child: BouncingTextAnimation()),) : mainappbar();
   }
 
   DecoratedBox buildCircularProgressIndicator(double percent, Size size) {
@@ -225,35 +232,6 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
               child: Image.asset('assets/image/1.png', fit: BoxFit.contain),
             ),
           ),
-          actions: <Widget>[
-            Padding(
-                padding: EdgeInsets.only(right: size.width * 0.06),
-                child: Stack(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          setState(() {
-                            noticecount = 0;
-                          });
-                          //notificationpage
-                        },
-                        icon: Icon(Icons.notifications_none),
-                        color: Colors.black),
-                    noticecount != 0
-                        ? Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: Color(0xff47ABFF),
-                              borderRadius: BorderRadius.circular(100)),
-                          constraints:
-                          BoxConstraints(minWidth: 7, minHeight: 7),
-                        ))
-                        : Container()
-                  ],
-                ))
-          ],
         ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
@@ -308,8 +286,8 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: size.width * 0.2,
-            height: size.width * 0.21,
+            width: size.width * 0.22,
+            height: size.width * 0.22,
             child: buildCircularProgressIndicator(
                 ecopercent, Size(size.height * 0.08, size.height * 0.08)),
           ),
@@ -504,6 +482,8 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       onTap: (){
         _controller4.forward();
         Future.delayed(Duration(milliseconds: 200), (){_controller4.reverse();});
+        Future.delayed(Duration(milliseconds: 200), () { movepage("notice");});
+
       },child: Container(
         margin:
         EdgeInsets.only(top: size.height * 0.025, bottom: size.height*0.025),
