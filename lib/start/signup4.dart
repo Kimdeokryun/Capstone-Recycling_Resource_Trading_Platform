@@ -70,7 +70,7 @@ class _signup4 extends State<signup4> {
         setState(() {
           isloading = false;
         });
-        Get.offAll(() => mainpage(), arguments: [2]);
+        Get.offAll(() => mainpage());
       } else {
         setState(() {
           isloading = false;
@@ -185,8 +185,10 @@ class _signup4 extends State<signup4> {
     return Container(
       padding: EdgeInsets.all(size.height*0.05),
         child: GestureDetector(
-          onTap: () async {
-            await _pickImage(ImageSource.gallery);
+          onTap: () {
+            setState(() async {
+              await _pickImage(ImageSource.gallery);
+            });
           },
           child: Container(
             width: size.width*0.3,

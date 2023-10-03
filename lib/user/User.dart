@@ -1,5 +1,4 @@
 User user = User();
-
 Serviceaddress svaddress = Serviceaddress();
 
 class User {

@@ -1,20 +1,11 @@
-import 'package:ecocycle/main/menupageUI.dart';
-import 'package:ecocycle/main/shoppingbasketUI.dart';
-import 'package:ecocycle/main/usagepageUI.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ecocycle/main/setting_global.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
-import '../collection/resource_transaction.dart';
-import '../how/howpage.dart';
-import '../mall/mainmallpage.dart';
-import '../notice/noticepage.dart';
 import 'breakdownUI.dart';
 import 'mainpageUI.dart';
-import 'menupage.dart';
 import 'mypageUI.dart';
 
 class mainpage extends StatefulWidget {
@@ -24,24 +15,19 @@ class mainpage extends StatefulWidget {
 
 class _mainpage extends State<mainpage> {
   late Size size;
-  late final args;
+  int selectedindex = 2;
 
-  Future<void> getdata() async {
-    args = await Get.arguments;
-  }
-
-  void movepage() {
-    Get.to(() =>menupage(),
-        transition: Transition.leftToRight,
-        duration: Duration(milliseconds: 500));
+  void movepage(int index) {
+    if (index == 1) {
+      //Get.to(() => menu());
+    } else {
+      //Get.to(() => shopping_basket());
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    getdata().then((_) {
-      class_setting.setting(args[0]);
-    });
   }
 
   @override
@@ -60,14 +46,12 @@ class _mainpage extends State<mainpage> {
     });
 
     return Scaffold(
-      appBar: class_setting.getnum() == 1
-          ? usagepageappbarUI()
-          : class_setting.getnum() == 3
+      appBar: selectedindex == 1
+          ? breakdownappbarUI()
+          : selectedindex == 3
               ? mypageappbarUI()
-              : class_setting.getnum() == 4
-                  ? shoppingbasketappbarUI()
-                  : null,
-      body: _getPage(class_setting.getnum()),
+              : null,
+      body: _getPage(selectedindex),
       bottomNavigationBar: mybottomnav(),
     );
   }
@@ -79,67 +63,55 @@ class _mainpage extends State<mainpage> {
       automaticallyImplyLeading: false,
       title: Text("내 정보",
           style: TextStyle(color: Colors.black, fontFamily: "HanM"),
-          textScaleFactor: 1.1),
+          textScaleFactor: 1.2),
       centerTitle: true,
     );
   }
 
-  AppBar usagepageappbarUI() {
+  AppBar breakdownappbarUI() {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
       automaticallyImplyLeading: false,
-      title: Text("거래 내역",
+      title: Text("이용 내역",
           style: TextStyle(color: Colors.black, fontFamily: "HanM"),
-          textScaleFactor: 1.1),
-      centerTitle: true,
-    );
-  }
-
-  AppBar shoppingbasketappbarUI() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      automaticallyImplyLeading: false,
-      title: Text("장바구니",
-          style: TextStyle(color: Colors.black, fontFamily: "HanM"),
-          textScaleFactor: 1.1),
+          textScaleFactor: 1.2),
       centerTitle: true,
     );
   }
 
   Widget _getPage(int index) {
     if (index == 1) {
-      return usagepageUI();
-    } else if (index == 2) {
-      return mainpageUI();
+      return breakdownUI();
     } else if (index == 3) {
       return mypageUI();
     } else {
-      return shoppingbasketUI();
+      return mainpageUI();
     }
   }
 
   Widget mybottomnav() {
     return BottomNavigationBar(
       elevation: 5,
-      currentIndex: class_setting.getnum(),
+      currentIndex: selectedindex,
       onTap: (index) {
-        if (index == 0) {
-          movepage();
-        } else {
+        print(index);
+        if (index == 1 || index == 2 || index == 3) {
           setState(() {
-            class_setting.setting(index);
+            selectedindex = index;
           });
+        } else {
+          movepage(index);
         }
       },
-      selectedItemColor: const Color(0xff47ABFF),
+      selectedItemColor: Color(0xff47ABFF),
       backgroundColor: Colors.white,
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.circle_grid_3x3_fill), label: '메뉴'),
-        BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: '거래 내역'),
+        BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.arrow_3_trianglepath), label: '이용내역'),
         BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: '홈'),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: '내 정보'),
         BottomNavigationBarItem(

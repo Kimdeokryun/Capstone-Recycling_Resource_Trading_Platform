@@ -48,18 +48,13 @@ class _editmy extends State<editmy> {
   }
 
   Future<void> logout() async {
+    await storage.delete(key: 'salepage');
+    await storage.delete(key: 'buypage');
     await storage.delete(key: 'login');
     await storage.delete(key: 'token');
     await storage.delete(key: 'userdata');
     await storage.delete(key: 'address');
-
-    await storage.delete(key: 'salepage');
-    await storage.delete(key: 'buypage');
     await storage.delete(key: 'transnum');
-
-    await storage.delete(key: 'MallLike');
-    await storage.delete(key: 'addressnum');
-
     Get.offAll(readypage());
   }
 

@@ -42,25 +42,32 @@ class Userdata {
 class Address {
   final String nickname;
   final String zipcode;
-  final String city;
-  final String address;
-  final String building;
+  final String address1;
+  final String address2;
+  final String address3;
+  final String address4;
+  final String address5;
 
-  Address(this.nickname, this.zipcode, this.city, this.address, this.building);
+  Address(this.nickname, this.zipcode, this.address1, this.address2, this.address3,
+      this.address4, this.address5);
 
   Address.fromJson(Map<String, dynamic> json)
       : nickname = json['nickname'],
         zipcode = json['zipcode'],
-        city = json['city'],
-        address = json['address'],
-        building = json['building'];
+        address1 = json['address1'],
+        address2 = json['address2'],
+        address3 = json['address3'],
+        address4 = json['address4'],
+        address5 = json['address5'];
 
   Map<String, dynamic> toJson() => {
         'nickname' : nickname,
         'zipcode': zipcode,
-        'city': city,
-        'address': address,
-        'building': building,
+        'address1': address1,
+        'address2': address2,
+        'address3': address3,
+        'address4': address4,
+        'address5': address5
       };
 }
 
@@ -79,58 +86,14 @@ class transaction {
   };
 }
 
-class MallLike {
-  final bool item0;
-  final bool item1;
-  final bool item2;
-  final bool item3;
-
-  MallLike(this.item0, this.item1, this.item2, this.item3);
-  MallLike.fromJson(Map<String, dynamic> json)
-      : item0 = json['item0'],
-        item1 = json['item1'],
-        item2 = json['item2'],
-        item3 = json['item3'];
-
-  Map<String, dynamic> toJson() => {
-    'item0' : item0,
-    'item1': item1,
-    'item2' : item2,
-    'item3': item3
-  };
-}
-
-
-Future<Map<String, dynamic>?> getMallLike() async {
-  String? jsonString = await storage.read(key: 'MallLike');
-  if (jsonString != null && jsonString.isNotEmpty) {
-    Map<String, dynamic>? malllike = jsonDecode(jsonString);
-    return malllike;
-  }
-  return {
-    "item0": false,
-    "item1": false,
-    "item2": false,
-    "item3": false,
-  };
-}
 
 Future<Map<String, dynamic>?> getUserData() async {
   String? jsonString = await storage.read(key: 'userdata');
   if (jsonString != null) {
-    Map<String, dynamic> userdata = jsonDecode(jsonString);
+    Map<String, dynamic>? userdata = jsonDecode(jsonString);
     return userdata;
   }
   return null;
-}
-
-Future<int> getAddressNum() async {
-  String? jsonString = await storage.read(key: 'addressnum');
-  if (jsonString != null) {
-    int addressnum =  int.parse(jsonString);
-    return addressnum;
-  }
-  return 0;
 }
 
 Future<List<dynamic>?> getAddressData() async {
@@ -140,15 +103,6 @@ Future<List<dynamic>?> getAddressData() async {
     return addresslist;
   }
   return null;
-}
-
-Future<List<dynamic>> getAddressData2() async {
-  String? jsonString = await storage.read(key: 'address');
-  if (jsonString != null) {
-    List<dynamic> addresslist = jsonDecode(jsonString);
-    return addresslist;
-  }
-  return [];
 }
 
 Future<Map<String, dynamic>?> getTransData() async {
@@ -181,6 +135,15 @@ Future<Userdata?> getUser() async {
   String? jsonString = await storage.read(key: 'address');
   if (jsonString != null) {
     Userdata? addresslist = jsonDecode(jsonString);
+    print(addresslist);
+    print(addresslist.runtimeType);
+  }
+}
+
+Future<List<Map<String, dynamic>>?> getAddress() async {
+  String? jsonString = await storage.read(key: 'address');
+  if (jsonString != null) {
+    var addresslist = jsonDecode(jsonString);
     print(addresslist);
     print(addresslist.runtimeType);
   }

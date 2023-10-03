@@ -1,14 +1,8 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:ecocycle/collection/resource_transaction.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import '../customlibrary/dialog.dart';
 import '../customlibrary/textanimation.dart';
-import '../main/mainpage.dart';
 import '../server/http_post.dart';
 import '../user/Trans_grade.dart';
 import '../user/User_Storage.dart';
@@ -29,49 +23,19 @@ class _transactiondetailpage extends State<transactiondetailpage> {
   late List<Map<String, String>> files = [];
   late String address;
   late int wheretoin;
-  late bool trans_status;
 
   int _currentPage = 0;
   bool isloading = true;
   bool likepress = false;
 
-  final PageController _pageController = PageController();
+  PageController _pageController = PageController();
 
   late Map<String, dynamic> _userdata;
-  late Map<String, dynamic> _user_profile;
-  late String _personal_phonenum;
-
+  late Map<String, dynamic> _transdata;
   late String _usernick;
   late double ecopercent;
   late List<String> ecoGrade;
-  late Uint8List _profile_path;
-  late String _id;
-
-  Future<void> move_transact() async {
-    print(_id);
-
-    _userdata = (await getUserData())!;
-
-    _personal_phonenum = _userdata["phonenumber"];
-    print(args[1]["phonenum"]);
-    print(_personal_phonenum);
-    if(args[1]["phonenum"] == _personal_phonenum){
-      print("!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      Othererror("구매 실패", "본인이 등록한 자원은\n구매할 수 없습니다.").showErrorDialog(context);
-    }
-    else{
-      Othererror("구매 확인", "구매하시겠습니까?").showErrorDialog(context);
-      trans_status = await success_trans_sale(_id, await getToken());
-
-      await Update_point(args[1]["phonenum"], 1);
-      await Update_point(_personal_phonenum, 1);
-
-      if(trans_status){
-        Get.offAll(() => mainpage(), arguments: [2]);
-        Get.to(transactionpage());
-      }
-    }
-  }
+  late String _profile_path;
 
   int getRandomInt(int min, int max) {
     final random = Random();
@@ -80,11 +44,12 @@ class _transactiondetailpage extends State<transactiondetailpage> {
 
   void getdata1() async {
     _userdata = (await getUserData())!;
+    _transdata = (await getTransData())!;
     _usernick = _userdata['nickname'];
-    _user_profile = (await Other_Profile(_userdata["phonenumber"]))!;
-    _profile_path = base64Decode(_user_profile['profile']);
-    int _trannum = int.parse(_user_profile['point']);
+    _profile_path = _userdata['profile'];
 
+    int _trannum = _transdata['sales'] + _transdata['buy'];
+    _trannum = 13;
     ecoGrade = getEcoGrade(_trannum);
     ecopercent = (_trannum % 10) / 10;
     print(ecopercent);
@@ -96,16 +61,9 @@ class _transactiondetailpage extends State<transactiondetailpage> {
   }
 
   void getdata2(dynamic arguments) async {
-    print("==============page id=====================");
-    print(_id);
-    print("==============page id=====================");
     _usernick = arguments["list"][0]["name"];
     address = arguments["list"][0]["address"];
-
-    _user_profile = (await Other_Profile(arguments["phonenum"]))!;
-    _profile_path = base64Decode(_user_profile['profile']);
-    int _trannum = int.parse(_user_profile['point']);
-
+    int _trannum = getRandomInt(1,100);
     ecoGrade = getEcoGrade(_trannum);
     ecopercent = (_trannum % 10) / 10;
     print(ecopercent);
@@ -130,7 +88,6 @@ class _transactiondetailpage extends State<transactiondetailpage> {
     // 등록 이후에 보여주는 페이지
     if(wheretoin == 1)// 거래 페이지에서 바로 보여줄 때.
     {
-      _id = args[2];
       getdata2(args[1]);
     }
     else{
@@ -288,8 +245,8 @@ class _transactiondetailpage extends State<transactiondetailpage> {
             child: Container(
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(100), color: Colors.grey),
-              child: ClipOval(
-                child: Image.memory(_profile_path),
+              child: ClipRect(
+                child: wheretoin == 0 ? Image.file(File(_profile_path)) : Container(),
               ),
             ),
           ),
@@ -318,7 +275,7 @@ class _transactiondetailpage extends State<transactiondetailpage> {
           ),
           Container(
             width: size.width * 0.2,
-            height: size.width * 0.22,
+            height: size.width * 0.21,
             child: buildCircularProgressIndicator(
                 ecopercent, Size(size.height * 0.08, size.height * 0.08)),
           ),
@@ -480,26 +437,24 @@ class _transactiondetailpage extends State<transactiondetailpage> {
                           borderRadius: BorderRadius.circular(20)),
                       child: Center(
                         child: Text(
-                          "ecopay",
+                          "ecotalk",
                           style: TextStyle(
                               color: Colors.white, fontFamily: "HanM"),
                           textScaleFactor: 1,
                         ),
                       ),
                     ),
-                    //Container(width: size.width*0.05,),
+                    Container(width: size.width*0.05,),
                     Container(
-                      padding: EdgeInsets.only(left: size.width*0.01),
                       child: GestureDetector(
-                        onTap: wheretoin == 0 ? null : () {
-                          print("구매하기");
-                          move_transact();
-                        },
-                        child: Text(
-                          "구매하기",
-                          style: TextStyle(
-                              color: wheretoin == 0 ? Colors.black26 : Colors.black, fontFamily: "HanM"),
-                          textScaleFactor: 1.6,
+                        onTap: wheretoin == 0 ? null : () {},
+                        child: Center(
+                          child: Text(
+                            "대화하기",
+                            style: TextStyle(
+                                color: wheretoin == 0 ? Colors.black26 : Colors.black, fontFamily: "HanM"),
+                            textScaleFactor: 1.6,
+                          ),
                         ),
                       ),
                     )

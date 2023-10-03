@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'explainpage.dart' as ex;
 import 'signup1.dart';
 import 'login.dart';
 
@@ -74,8 +75,13 @@ class _Welcome extends State<Welcome> with TickerProviderStateMixin {
               color: Colors.black, //change your color here
             ),
           ),
-          body: SafeArea(
-              child: Container(
+          body: WillPopScope(
+              onWillPop: () async {
+                await ex.jumptopage();
+                return true;
+              },
+              child: SafeArea(
+                  child: Container(
                 color: Colors.white,
                 width: double.infinity,
                 height: double.infinity,
@@ -156,7 +162,7 @@ class _Welcome extends State<Welcome> with TickerProviderStateMixin {
                       child: Container(
                       ))
                 ]),
-              )),
+              ))),
         ));
   }
 
