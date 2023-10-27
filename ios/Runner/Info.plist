@@ -53,5 +53,12 @@
 		<string>This app requires access to the camera.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>This app requires access to the photo library.</string>
+		<key>LSApplicationQueriesSchemes</key>
+          <array>
+            <string>https</string>
+            <string>http</string>
+          </array>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Need location for location-based content</string>
 	</dict>
 </plist>
