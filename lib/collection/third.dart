@@ -187,7 +187,7 @@ class _images_modeling extends State<images_modeling> {
         isloading = false;
         ispredict = false;
       });
-      Get.offAll(() => mainpage());
+      Get.offAll(() => mainpage(), arguments: [2]);
       Get.to(transactionpage());
       Get.to(transactiondetailpage(), arguments: [0, resultpath, svaddress.get()]);
     }
@@ -291,7 +291,7 @@ class _images_modeling extends State<images_modeling> {
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             '자원 정보 입력',
             style: TextStyle(color: Colors.black, fontFamily: "HanB"),
             textScaleFactor: 1,

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../customlibrary/dialog.dart';
 import '../customlibrary/textanimation.dart';
 import 'package:image_picker/image_picker.dart';
+import '../main/setting_global.dart';
 import '../user/User.dart';
 import '../server/http_post.dart';
 import '../main/mainpage.dart';
@@ -70,7 +71,8 @@ class _signup4 extends State<signup4> {
         setState(() {
           isloading = false;
         });
-        Get.offAll(() => mainpage());
+        class_setting.setting(2);
+        Get.offAll(() => mainpage(), arguments: [2]);
       } else {
         setState(() {
           isloading = false;
@@ -185,10 +187,8 @@ class _signup4 extends State<signup4> {
     return Container(
       padding: EdgeInsets.all(size.height*0.05),
         child: GestureDetector(
-          onTap: () {
-            setState(() async {
-              await _pickImage(ImageSource.gallery);
-            });
+          onTap: () async {
+            await _pickImage(ImageSource.gallery);
           },
           child: Container(
             width: size.width*0.3,

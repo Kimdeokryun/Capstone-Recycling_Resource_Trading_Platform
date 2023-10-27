@@ -2,8 +2,10 @@ import 'package:multi_masked_formatter/multi_masked_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sprintf/sprintf.dart';
+import '../customlibrary/dialog.dart';
 import '../server/http_post.dart';
 import 'package:get/get.dart';
+import 'User.dart';
 import 'changepw.dart';
 import '../start/welcome.dart';
 import 'dart:async';
@@ -30,7 +32,6 @@ class _searchpw extends State<searchpw> {
   final _text = TextEditingController();
   final _code = TextEditingController();
 
-
   FocusNode myFocusNode = FocusNode();
   FocusNode emailfield = FocusNode();
 
@@ -38,38 +39,14 @@ class _searchpw extends State<searchpw> {
   bool isEmail = false;
   String subtitle = "가입한 휴대폰 번호를\n입력해주세요";
   int selnum = 0;
-  String user_in = "";
+  late bool user_in;
 
   String authcode = "";
 
-  void send_sms() async {
+  Future<void> send_sms() async {
     bool connect = await check_connect();
     if(connect == false){
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Center(child: Text("인터넷 연결", style: TextStyle(fontFamily: "HanB"))),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(child: Text("인터넷 연결을 확인 해주세요.", style: TextStyle(fontFamily: "HanM")))
-              ],
-            ),
-            actions: [
-              Center(
-                child: TextButton(
-                  child: Text("확인", style: TextStyle(fontFamily: "NSB", color: Color(0xff47ABFF))),
-                  onPressed: (){
-                    Navigator.pop(context);
-                  },
-                ),
-              )
-            ],
-          );
-        },
-      );
+      Servererror().showErrorDialog(context);
     }
     else{
       String phnum = _text.text.replaceAll("-", "");
@@ -81,61 +58,14 @@ class _searchpw extends State<searchpw> {
   void nextpage() async {
     bool connect = await check_connect();
     if(connect == false){
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Center(child: Text("인터넷 연결", style: TextStyle(fontFamily: "HanB"))),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(child: Text("인터넷 연결을 확인 해주세요.", style: TextStyle(fontFamily: "HanM")))
-              ],
-            ),
-            actions: [
-              Center(
-                child: TextButton(
-                  child: Text("확인", style: TextStyle(fontFamily: "NSB", color: Color(0xff47ABFF))),
-                  onPressed: (){
-                    Navigator.pop(context);
-                  },
-                ),
-              )
-            ],
-          );
-        },
-      );
+      Servererror().showErrorDialog;
     }
     else{
-      user_in = await post_searchpw(selnum, _text.text);
-      if(user_in == "false"){
+      user.phonenumber = _text.text;
+      user_in = await check_signup("0" ,user.phonenumber);
+      if(user_in == false){
         print("가입한 정보가 없습니다.");
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content:  Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(child: Text("가입된 정보가 없습니다.\n먼저 회원가입을 해주세요.", style: TextStyle(fontFamily: "HanM")))
-                ],
-              ),
-              actions: [
-                Center(
-                  child: TextButton(
-                    child: Text("확인", style: TextStyle(fontFamily: "NSB", color: Color(0xff47ABFF))),
-                    onPressed: (){
-                      Navigator.pop(context);
-                      Get.offAll(() => Welcome());
-                    },
-                  ),
-                )
-              ],
-            );
-          },
-        );
+        Othererror("정보 확인", "가입된 정보가 없습니다.\n먼저 회원가입을 해주세요.").showErrorDialog(context);
       }
       else{
         Get.to(() => changepw(), arguments: {'selnum': selnum, 'data': _text.text} );

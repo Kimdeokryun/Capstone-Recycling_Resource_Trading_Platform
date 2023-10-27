@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:ecocycle/start/welcome.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +11,6 @@ import '../user/User_Storage.dart';
 import '../server/http_post.dart';
 import '../main/mainpage.dart';
 import 'package:get/get.dart';
-import 'explainpage.dart';
 import 'dart:io';
 
 class readypage extends StatefulWidget {
@@ -60,8 +62,16 @@ class _readypage extends State<readypage> {
     userInfo = await storage.read(key: 'login');
     // user의 정보가 있다면 로그인 후 들어가는 첫 페이지로 넘어가게 합니다.
     if (userInfo != null) {
-      print('로그인 완료');
-      next = 1;
+      if(await post_login(1, jsonDecode(userInfo)["username"], jsonDecode(userInfo)["password"]))
+      {
+        print("토큰 갱신 완료");
+        next = 1;
+      }
+      else
+      {
+        next = 0;
+      }
+
     } else {
       print('로그인이 필요합니다');
       next = 2;
@@ -86,12 +96,16 @@ class _readypage extends State<readypage> {
     if (next == 1) {
       Get.offAll(() => mainpage(),
           transition: Transition.native,
-          duration: Duration(milliseconds: 500));
+          duration: const Duration(milliseconds: 500), arguments: [2]);
     }
-    else {
-      Get.offAll(() => explain(),
+    else if (next == 2){
+      Get.offAll(() => Welcome(),
           transition: Transition.native,
-          duration: Duration(milliseconds: 500));
+          duration: const Duration(milliseconds: 500));
+    }
+    else
+    {
+      Othererror("로그인 실패", "로그인이 실패하였습니다.").showErrorDialog(context);
     }
   }
 

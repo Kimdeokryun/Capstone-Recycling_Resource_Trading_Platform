@@ -58,14 +58,12 @@ class _signup1 extends State<signup1> {
       Connecterror().showErrorDialog(context);
     }
     else{
-      //user_in = await check_signup();
-      user_in = true;
-      if(user_in == false){
+      user.phonenumber = _phonenumber.text;
+      user_in = await check_signup("0" ,user.phonenumber);
+      if(user_in == true){
         Inusererror().showErrorDialog(context);
       }
       else{
-        user.init1();
-        user.phonenumber = _phonenumber.text;
         Get.to(() => signup2());
       }
     }

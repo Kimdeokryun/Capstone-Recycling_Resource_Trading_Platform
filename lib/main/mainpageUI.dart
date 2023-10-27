@@ -1,3 +1,5 @@
+import 'package:ecocycle/main/mainpage.dart';
+import 'package:ecocycle/notice/noticepage.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,11 +8,16 @@ import '../collection/resource_transaction.dart';
 import 'package:get/get.dart';
 
 import '../customlibrary/textanimation.dart';
+import '../server/http_post.dart';
 import '../user/Trans_grade.dart';
 import '../user/User_Storage.dart';
+import '/challenge/challengemainpage.dart';
 import 'dart:ui';
 
 import 'ReadytoPage.dart';
+import 'package:ecocycle/how/howpage.dart';
+import 'package:ecocycle/mall/mainmallpage.dart';
+
 
 class mainpageUI extends StatefulWidget {
   @override
@@ -31,8 +38,9 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
   late AnimationController _controller4;
   late AnimationController _controller5;
 
+  late AnimationController _subcontroller;
+
   late Map<String, dynamic> _userdata;
-  late Map<String, dynamic> _transdata;
   late String _usernick;
   late double ecopercent;
   late List<String> ecoGrade;
@@ -46,25 +54,33 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
   void movepage(where) {
     if(where == "about"){}
     else if(where == "how"){
-      Get.to(() => readytopage(), arguments: "이건 어떻게 버릴까?");
+      Get.to(() => howpage());
     }
     else if (where == "collection") {
-      print("gototransactoinpage");
       Get.to(() => transactionpage());
     } else if (where == "mall") {
-      Get.to(() => readytopage(), arguments: "제품몰");
+      Get.to(() => mainmallpage());
+    }
+    else if(where == "notice")
+    {
+      Get.to(() => noticepage(), arguments: ["공지사항"]);
+    }
+    else if(where == "challenge")
+    {
+      Get.to(() => challengemain(), arguments: ["재활용 챌린지"]);
+
     }
   }
 
   void getdata() async {
     _userdata = (await getUserData())!;
-    _transdata = (await getTransData())!;
     _usernick = _userdata['nickname'];
-    int _trannum = _transdata['sales'] + _transdata['buy'];
-    _trannum = 13;
+
+    Map<String, dynamic> _user_profile = (await Other_Profile(_userdata["phonenumber"]))!;
+    int _trannum = int.parse(_user_profile['point']);
+
     ecoGrade = getEcoGrade(_trannum);
     ecopercent = (_trannum % 10) / 10;
-    print(ecopercent);
     setState(() {
       isloading = false;
     });
@@ -79,26 +95,29 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
     _scrollController = ScrollController()..addListener(
             (){
           setState(() {
-            _color1 = _changeExposureAppBarState ? Color(0xff47ABFF) : Colors.transparent;
+            _color1 = _changeExposureAppBarState ? const Color(0xff47ABFF) : Colors.transparent;
             _color2 = _changeExposureAppBarState ? Colors.black : Colors.transparent;
           }
           );
         }
     );
     _controller1 = AnimationController(
-      duration: Duration(milliseconds: 100), vsync: this,
+      duration: const Duration(milliseconds: 100), vsync: this,
     );
     _controller2 = AnimationController(
-      duration: Duration(milliseconds: 100), vsync: this,
+      duration: const Duration(milliseconds: 100), vsync: this,
     );
     _controller3 = AnimationController(
-      duration: Duration(milliseconds: 100), vsync: this,
+      duration: const Duration(milliseconds: 100), vsync: this,
     );
     _controller4 = AnimationController(
-      duration: Duration(milliseconds: 100), vsync: this,
+      duration: const Duration(milliseconds: 100), vsync: this,
     );
     _controller5 = AnimationController(
-      duration: Duration(milliseconds: 100), vsync: this,
+      duration: const Duration(milliseconds: 100), vsync: this,
+    );
+    _subcontroller = AnimationController(
+      duration: const Duration(milliseconds: 100), vsync: this,
     );
 
   }
@@ -110,6 +129,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
     _controller3.dispose();
     _controller4.dispose();
     _controller5.dispose();
+    _subcontroller.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -124,12 +144,12 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       SystemChrome.setSystemUIOverlayStyle(overlayStyle);
     });
 
-    return isloading ?  Center(child: BouncingTextAnimation()) : mainappbar();
+    return isloading ?  Container(color: Colors.white,child: Center(child: BouncingTextAnimation()),) : mainappbar();
   }
 
   DecoratedBox buildCircularProgressIndicator(double percent, Size size) {
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -142,7 +162,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       ),
       child: Container
         (
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white
         ),
@@ -152,7 +172,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
           animation: true,
           animationDuration: 1000,
           percent: percent,
-          progressColor: Color(0xff47ABFF),
+          progressColor: const Color(0xff47ABFF),
           backgroundColor: Colors.black12,
           fillColor: Colors.transparent,
           circularStrokeCap: CircularStrokeCap.round,
@@ -225,35 +245,6 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
               child: Image.asset('assets/image/1.png', fit: BoxFit.contain),
             ),
           ),
-          actions: <Widget>[
-            Padding(
-                padding: EdgeInsets.only(right: size.width * 0.06),
-                child: Stack(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          setState(() {
-                            noticecount = 0;
-                          });
-                          //notificationpage
-                        },
-                        icon: Icon(Icons.notifications_none),
-                        color: Colors.black),
-                    noticecount != 0
-                        ? Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: Color(0xff47ABFF),
-                              borderRadius: BorderRadius.circular(100)),
-                          constraints:
-                          BoxConstraints(minWidth: 7, minHeight: 7),
-                        ))
-                        : Container()
-                  ],
-                ))
-          ],
         ),
         SliverList(
           delegate: SliverChildBuilderDelegate(
@@ -265,15 +256,16 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                     children: [
                       statusbar(),
                       mainfunc1(),
+                      subfunc(),
                       mainfunc2(),
                       mainfunc3(),
                       Container(
-                        height: size.height * 0.3,
+                        height: size.height * 0.2,
                         color: Colors.white,
                         child: Center(
                           child: RichText(
                             textAlign: TextAlign.center,
-                            text: TextSpan(
+                            text: const TextSpan(
                               children: [
                                 TextSpan(
                                   text: "eco",
@@ -308,8 +300,8 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: size.width * 0.2,
-            height: size.width * 0.21,
+            width: size.width * 0.22,
+            height: size.width * 0.22,
             child: buildCircularProgressIndicator(
                 ecopercent, Size(size.height * 0.08, size.height * 0.08)),
           ),
@@ -321,13 +313,13 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
               textAlign: TextAlign.end,
               text: TextSpan(
                 children: [
-                  TextSpan(
+                  const TextSpan(
                     text: "다음 등급\n",
                     style: TextStyle(color: Colors.black, fontFamily: 'HanM'),
                   ),
                   TextSpan(
-                    text: "${ecoGrade[1]}",
-                    style: TextStyle(color: Color(0xff47ABFF), fontFamily: 'HanM'),
+                    text: ecoGrade[1],
+                    style: const TextStyle(color: Color(0xff47ABFF), fontFamily: 'HanM'),
                   ),
                 ],
               ),
@@ -362,14 +354,14 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                 child: Container(
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.grey,
                           offset: Offset(0.0, 1.0), //(x,y)
                           blurRadius: 1,
                         )
                       ],
-                      image: DecorationImage(
+                      image: const DecorationImage(
                           image: AssetImage('assets/image/수거요청.png'),
                           fit: BoxFit.cover
                       )
@@ -377,12 +369,12 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                   child: GestureDetector(
                       onTap: () {
                         _controller1.forward();
-                        Future.delayed(Duration(milliseconds: 100), () { _controller1.reverse();});
-                        Future.delayed(Duration(milliseconds: 200), () { movepage("collection");});
+                        Future.delayed(const Duration(milliseconds: 100), () { _controller1.reverse();});
+                        Future.delayed(const Duration(milliseconds: 200), () { movepage("collection");});
                       },
                       child: Container(
                         margin: EdgeInsets.only(left: size.width*0.03, top: size.width*0.03),
-                        child: Text('자원 거래',
+                        child: const Text('자원 거래',
                             style: TextStyle(fontFamily: "HanB", color: Colors.black),
                             textScaleFactor: 1.5),
                       )
@@ -393,8 +385,8 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
           GestureDetector(
             onTap: (){
               _controller2.forward();
-              Future.delayed(Duration(milliseconds: 100), () { _controller2.reverse();});
-              Future.delayed(Duration(milliseconds: 200), () { movepage("how");});
+              Future.delayed(const Duration(milliseconds: 100), () { _controller2.reverse();});
+              Future.delayed(const Duration(milliseconds: 200), () { movepage("how");});
             },child: Container(
               width: size.width*0.425,
               height: size.width*0.425,
@@ -406,7 +398,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                 child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.grey,
                           offset: Offset(0.0, 1.0), //(x,y)
@@ -420,14 +412,14 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('이건 어떻게\n버릴까?',
+                          const Text('이건 어떻게\n버릴까?',
                               style: TextStyle(fontFamily: "HanB", color: Colors.black),
                               textScaleFactor: 1.5),
                           Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(25),
-                                    image: DecorationImage(
+                                    image: const DecorationImage(
                                       image: AssetImage('assets/image/어떻게버릴까.png'),
                                       fit: BoxFit.contain,
                                     )
@@ -445,6 +437,82 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       ),
     );
   }
+
+  Widget subfunc(){
+    return Container(
+      margin:
+      EdgeInsets.only(top: size.height * 0.025),
+      width: size.width * 0.9,
+      height: size.width*0.3,
+      child: GestureDetector(
+        onTap: (){
+          _subcontroller.forward();
+          Future.delayed(const Duration(milliseconds: 100), () { _subcontroller.reverse();});
+          Future.delayed(const Duration(milliseconds: 200), () { movepage("challenge");});
+        },child: Container(
+          width: size.width*0.9,
+          height: size.width*0.2,
+          child: ScaleTransition(
+            scale: Tween<double>(
+                begin: 1.0,
+                end: 0.95
+            ).animate(_subcontroller),
+            child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.grey,
+                        offset: Offset(0.0, 1.0), //(x,y)
+                        blurRadius: 1,
+                      )
+                    ],
+                    color: Color(0xff47ABFF)
+                ),
+                child: Container(
+                  margin: EdgeInsets.only(left: size.width*0.03, top: size.width*0.03),
+                  child: Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('재활용 챌린지',
+                                  style: TextStyle(fontFamily: "HanB", color: Colors.white),
+                                  textScaleFactor: 1.5),
+                              Container(width: size.width*0.02),
+                              const Icon(Icons.outlined_flag_rounded, color: Colors.white,)
+                            ],
+                          ),
+                          Container(height: size.height*0.01,),
+                          const Text('사진을 공유하고 포인트를 받아가자!',
+                              style: TextStyle(fontFamily: "HanM", color: Colors.white),
+                              textScaleFactor: 1)
+                        ],
+                      ),
+                      Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25),
+                                image: const DecorationImage(
+                                    image: AssetImage('assets/image/eco.png'),
+                                    fit: BoxFit.fitWidth,
+                                    alignment: Alignment.center
+                                )
+                            ),
+                          )
+                      )
+                    ],
+                  ),
+                )
+            ),
+          )
+      ),
+      ),
+    );
+  }
+
   Widget mainfunc2(){
     return Container(
       margin:
@@ -454,8 +522,8 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
       child: GestureDetector(
         onTap: (){
           _controller3.forward();
-          Future.delayed(Duration(milliseconds: 100), () { _controller3.reverse();});
-          Future.delayed(Duration(milliseconds: 200), () { movepage("mall");});
+          Future.delayed(const Duration(milliseconds: 100), () { _controller3.reverse();});
+          Future.delayed(const Duration(milliseconds: 200), () { movepage("mall");});
         },child: Container(
           width: size.width*0.9,
           height: size.width*0.2,
@@ -467,7 +535,7 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
             child: Container(
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.grey,
                         offset: Offset(0.0, 1.0), //(x,y)
@@ -481,11 +549,11 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('제품몰',
+                      const Text('제품몰',
                           style: TextStyle(fontFamily: "HanB", color: Colors.black),
                           textScaleFactor: 1.5),
                       Container(height: size.height*0.01,),
-                      Text('이런 제품은 어때?',
+                      const Text('이런 제품은 어때?',
                           style: TextStyle(fontFamily: "HanM", color: Colors.black),
                           textScaleFactor: 1)
                     ],
@@ -498,53 +566,53 @@ class _mainpageUI extends State<mainpageUI>with TickerProviderStateMixin{
     );
   }
 
-
   Widget mainfunc3(){
-    return GestureDetector(
-      onTap: (){
-        _controller4.forward();
-        Future.delayed(Duration(milliseconds: 200), (){_controller4.reverse();});
-      },child: Container(
-        margin:
-        EdgeInsets.only(top: size.height * 0.025, bottom: size.height*0.025),
-        width: size.width * 0.9,
-        height: size.width*0.425,
-        child: ScaleTransition(
-          scale: Tween<double>(
-              begin: 1.0,
-              end: 0.95
-          ).animate(_controller4),
-          child: Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  color: Color(0xff47ABFF)
-              ),
-              child: Container(
-                margin: EdgeInsets.only(left: size.width*0.03, top: size.width*0.03),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('공지사항',
-                        style: TextStyle(fontFamily: "HanB", color: Colors.white),
-                        textScaleFactor: 1.5),
-                    Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(25),
-                              image: DecorationImage(
-                                  image: AssetImage('assets/image/eco.png'),
-                                  fit: BoxFit.contain,
-                                  alignment: Alignment.centerRight
-                              )
-                          ),
-                        )
-                    )
-                  ],
+    return Container(
+      margin:
+      EdgeInsets.only(top: size.height * 0.025, bottom: size.height * 0.025),
+      width: size.width * 0.9,
+      height: size.width*0.3,
+      child: GestureDetector(
+        onTap: (){
+          _controller4.forward();
+          Future.delayed(const Duration(milliseconds: 100), () { _controller4.reverse();});
+          Future.delayed(const Duration(milliseconds: 200), () { movepage("notice");});
+        },child: Container(
+          width: size.width*0.9,
+          height: size.width*0.2,
+          child: ScaleTransition(
+            scale: Tween<double>(
+                begin: 1.0,
+                end: 0.95
+            ).animate(_controller4),
+            child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.grey,
+                        offset: Offset(0.0, 1.0), //(x,y)
+                        blurRadius: 1,
+                      )
+                    ],
+                    color: Colors.white
                 ),
-              )
-          ),
-        )
-    ),
+                child: Container(
+                  margin: EdgeInsets.only(left: size.width*0.03, top: size.width*0.03),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('공지사항',
+                          style: TextStyle(fontFamily: "HanB", color: Colors.black),
+                          textScaleFactor: 1.5),
+                      Container(height: size.height*0.01,),
+                    ],
+                  ),
+                )
+            ),
+          )
+      ),
+      ),
     );
   }
 }

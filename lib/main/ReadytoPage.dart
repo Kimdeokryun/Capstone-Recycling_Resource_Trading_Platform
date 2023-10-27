@@ -15,7 +15,7 @@ class _readytopage extends State<readytopage> {
   String appbarname =  "";
 
   void getdata() async {
-    appbarname = await Get.arguments;
+    appbarname = await Get.arguments[0];
     setState(() {
       isloading = false;
     });

@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:get_ip_address/get_ip_address.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -12,18 +12,12 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
-late String url;
+late String _url;
 bool isloading = false;
 
 Future<void> settingIP() async {
   try {
-    var ipAddress = IpAddress(type: RequestType.json);
-    dynamic data = await ipAddress.getIpAddress();
-    if (data["ip"].toString() == "") {
-      url = "";
-    } else {
-      url = "";
-    }
+    _url = "";
   } on IpAddressException catch (e) {
     print(e.message);
   }
@@ -31,13 +25,7 @@ Future<void> settingIP() async {
 
 Future<void> settingIP2() async {
   try {
-    var ipAddress = IpAddress(type: RequestType.json);
-    dynamic data = await ipAddress.getIpAddress();
-    if (data["ip"].toString() == "") {
-      url = "";
-    } else {
-      url = "";
-    }
+    _url = "";
   } on IpAddressException catch (e) {
     print(e.message);
   }
@@ -64,7 +52,7 @@ Future<bool> check_connect() async {
 // SplashScreen 서버 연동 부분
 Future<String> getcondition() async {
   await settingIP();
-  String url1 = url + "/";
+  String url1 = "$_url/";
   String cond = "false";
   Map appversion = {"appversion": "1.0.0"};
   var body = json.encode(appversion);
@@ -90,7 +78,7 @@ Future<String> getcondition() async {
 
 Future<String> post_sms(String data) async {
   await settingIP();
-  String url1 = url + "/sms/send";
+  String url1 = "$_url/sms/send";
 
   late Map smssend;
   String authcode = "";
@@ -115,29 +103,35 @@ Future<String> post_sms(String data) async {
   return authcode;
 }
 
-// Signup1 핸드폰 번호 가입 조회 부분
-Future<bool> check_signup() async {
-  await settingIP();
-  String url1 = url + "/search_user";
+// 회원가입 조회
+Future<bool> check_signup(String type, String data) async {
+  await settingIP2();
   bool cond = false;
-
+  String url1 = "$_url/get_user_in/";
   Map phonenumber = {
-    "type": "0",
-    "data": user.phonenumber,
+    "type": type,
+    "data": data,
   };
 
   var body = json.encode(phonenumber);
+
   try {
     http.Response response = await http.post(
       Uri.parse(url1),
       headers: {'Content-Type': 'application/json'},
       body: body,
     );
-    if (jsonDecode(response.body)["user"] == "false") {
-      cond = true;
-      print("signup 핸드폰 번호 가입 조회 완료");
-    } else {
-      cond = false;
+
+    print(response.body);
+
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      if (jsonDecode(response.body)["user"] == "false") {
+        cond = false;
+        print("signup 미완료");
+      } else {
+        cond = true;
+        print("signup 완료");
+      }
     }
   } catch (e) {
     print(e);
@@ -149,8 +143,7 @@ Future<bool> check_signup() async {
 // Signup 회원가입 서버 전송 부분
 Future<bool> post_signup() async {
   await settingIP();
-
-  String url1 = "$url/signup";
+  String url1 = "$_url/signup";
   bool cond = false;
 
   var request = http.MultipartRequest("POST", Uri.parse(url1));
@@ -179,25 +172,29 @@ Future<bool> post_signup() async {
 
   print(request.fields['userPostDto']);
   print(request.fields['addressEntity']);
-  request.files.add(await http.MultipartFile.fromPath('profile', user.profile));
+
+  ByteData bytes = await rootBundle.load(user.profile);
+  var buffer = bytes.buffer.asUint8List();
+
+  request.files.add(await http.MultipartFile.fromBytes('profile', buffer,
+      filename: "${user.name}.png"));
 
   try {
     print(request);
     var response = await request.send();
     print(response.statusCode);
-    print(response);
     if (200 <= response.statusCode && response.statusCode < 300) {
-      print(response.stream.bytesToString());
-      if (response.stream.bytesToString() == "true") {
-        Future.delayed(
-          Duration(seconds: 1),
-          () async {
-            cond = await post_login(0, user.phonenumber, user.password);
-          },
-        );
-        if (cond == true) {
-          user.init();
+      var responedata = await response.stream.bytesToString();
+
+      String temp_cond = jsonDecode(responedata)["signup"];
+      print(temp_cond);
+      if (temp_cond == "true") {
+        if (await set_event_point(user.phonenumber)) {
+          cond = await post_login(0, user.phonenumber, user.password);
         }
+      }
+      if (cond == true) {
+        user.init();
       }
     }
   } catch (e) {
@@ -207,13 +204,31 @@ Future<bool> post_signup() async {
   return cond;
 }
 
+Future<bool> set_event_point(String phonenum) async {
+  await settingIP2();
+  String url1 = "$_url/set_event_point/?phonenum=$phonenum";
+  print(url1);
+  try {
+    final response = await http.get(Uri.parse(url1));
+    print(response.statusCode);
+    print(response.body);
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+      if (jsonResponse["set"] == "true") {
+        return true;
+      }
+    }
+  } catch (e) {
+    print(e);
+  }
+  return false;
+}
+
 Future<bool> post_login(int type, String userid, String userpw) async {
   await settingIP();
-  String url1 = url + "/v11/auth/login";
+  String url1 = "$_url/v11/auth/login";
   bool cond = false;
-  late Map logindata;
-
-  logindata = {"username": userid, "password": userpw};
+  final Map logindata = {"username": userid, "password": userpw};
 
   var body = json.encode(logindata);
 
@@ -225,7 +240,7 @@ Future<bool> post_login(int type, String userid, String userpw) async {
     );
     if (response.statusCode == 200) {
       if (response.body == "Success") {
-        var val1 = jsonEncode(Login("OK"));
+        var val1 = jsonEncode(logindata);
         var _token = response.headers['authorization'];
 
         await storage.write(
@@ -233,8 +248,24 @@ Future<bool> post_login(int type, String userid, String userpw) async {
           value: val1,
         );
         await storage.write(key: 'token', value: _token);
-        cond = await get_user_data(type, userid, _token!);
-        print("로그인 완료");
+
+        if (type == 1) {
+          cond = true;
+        } else {
+          cond = await get_user_data(type, userid, _token!);
+        }
+
+        if (cond) {
+
+          if (await get_fastapi_token(logindata)) {
+            cond = true;
+            print("로그인 완료");
+          } else {
+            cond = false;
+            print("fastapi 로그인 실패");
+          }
+
+        }
       }
     }
   } catch (e) {
@@ -244,9 +275,38 @@ Future<bool> post_login(int type, String userid, String userpw) async {
   return cond;
 }
 
+Future<bool> get_fastapi_token(logindata) async {
+  await settingIP2();
+  String url1 = "$_url/fastapi/auth/login";
+  bool cond = false;
+
+  var body = {
+    'username': logindata['username'],
+    'password': logindata['password'],
+  };
+
+  try {
+    http.Response response = await http.post(
+      Uri.parse(url1),
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: body,
+    );
+    if (response.statusCode == 200) {
+      var _token = response.headers['authorization'];
+      await storage.write(key: 'fastapi_token', value: _token);
+      cond = true;
+    }
+  } catch (e) {
+    print(e);
+    print("토큰 발급 실패");
+  }
+  return cond;
+}
+
+
 Future<bool> get_user_data(int type, String userid, String _token) async {
   await settingIP();
-  String url1 = url + "/User/get";
+  String url1 = "$_url/User/get";
   bool cond = false;
   late Map logindata;
 
@@ -273,9 +333,13 @@ Future<bool> get_user_data(int type, String userid, String _token) async {
             request["addressNickname"],
             request["zipcode"],
             request["address1"],
-            request["address2"],
-            request["address3"],
-            request["address4"],
+            request["address1"] +
+                " " +
+                request["address2"] +
+                " " +
+                request["address3"] +
+                " " +
+                request["address4"],
             request["address5"]);
         val2.add(address);
       }
@@ -295,7 +359,7 @@ Future<bool> get_user_data(int type, String userid, String _token) async {
 
 Future<String> post_searchpw(int type, String data) async {
   await settingIP();
-  String url1 = url + "/login/searchpw";
+  String url1 = "$_url/login/searchpw";
   String user_in = "";
   late Map searchpw;
 
@@ -327,7 +391,7 @@ Future<String> post_searchpw(int type, String data) async {
 
 Future<String> post_changepw(int type, String data, String userpw) async {
   await settingIP();
-  String url1 = url + "/login/changepw";
+  String url1 = "$_url/login/changepw";
   late Map changepw;
   String cond = "";
   if (type == 0) {
@@ -349,14 +413,17 @@ Future<String> post_changepw(int type, String data, String userpw) async {
   return cond;
 }
 
-Future<bool> sent_trash_image(
-    Map<String, dynamic>? userdata, String address, List<Map<String, String>> fileinfo) async {
-
+Future<bool> sent_trash_image(Map<String, dynamic>? userdata, String address,
+    List<Map<String, String>> fileinfo) async {
   await settingIP();
 
   print(userdata);
-  String url1 = url + "/resources2";
-  var request = new http.MultipartRequest("POST", Uri.parse(url1));
+  String url1 = "$_url/resources2";
+
+  print("----------------------resources2-----------------------");
+  print(url1);
+
+  var request = http.MultipartRequest("POST", Uri.parse(url1));
   String? token = await storage.read(key: "token");
   if (token != null) {
     print(token);
@@ -374,9 +441,9 @@ Future<bool> sent_trash_image(
       print("이미지확인용===============================");
       img_info.add({
         'name': userdata!['nickname'],
-        'phonenum': userdata['phonenumber'],
+        'phonenum': i == 0 ? userdata['phonenumber'] : null,
         'address': address,
-        'num': i+1,
+        'num': i + 1,
         'resourceNum': fileinfo[i]['info'],
       });
       request.files.add(
@@ -384,6 +451,7 @@ Future<bool> sent_trash_image(
     }
     request.fields['requests'] = jsonEncode(img_info);
     make_objects = true;
+
     print(request.fields['requests']);
   } catch (e) {
     print(e);
@@ -412,27 +480,199 @@ Future<bool> sent_trash_image(
   return post_from;
 }
 
+Future<bool> sent_buy_info(Map<String, dynamic>? userdata, String address,
+    Map<String, String> name_data, Map<String, String> number_data) async {
+  await settingIP();
 
+  print(userdata);
+  String url1 = "$_url/resources3";
+  print("----------------------resources3-----------------------");
+  print(url1);
+
+  var request = new http.MultipartRequest("POST", Uri.parse(url1));
+  String? token = await storage.read(key: "token");
+  if (token != null) {
+    print(token);
+    request.headers["authorization"] = token;
+  }
+
+  bool post_from = false;
+  bool make_objects = false;
+  late List<Map> resources_info = [];
+  try {
+    for (var entry in name_data.entries) {
+      print("자원확인용===============================");
+      print(entry.value + " " + number_data[entry.key]!);
+      print("자원확인용===============================");
+      resources_info.add({
+        'name': userdata!['nickname'],
+        'phonenum': userdata['phonenumber'],
+        'address': address,
+        'num': number_data[entry.key],
+        'resourceNum': entry.value,
+      });
+    }
+
+    request.fields['requests'] = jsonEncode(resources_info);
+    make_objects = true;
+
+    print(request.fields['requests']);
+  } catch (e) {
+    print(e);
+  }
+
+  if (make_objects) {
+    print("make objects = 성공");
+    try {
+      var response = await request.send();
+      print(response.statusCode);
+
+      if (response.statusCode == 200) {
+        var responsedata = response.stream.bytesToString();
+        print(responsedata);
+        // jsonBody를 바탕으로 data 핸들링
+        post_from = true;
+      } else {
+        // 200 안뜨면 에러
+        post_from = false;
+      }
+    } catch (e) {
+      Exception(e);
+    }
+  }
+  return post_from;
+}
 
 Future<http.Response> fetchImage(String imagepath) async {
   await settingIP2();
-  String url1 = "$url/images/?image_path=$imagepath";
-  return http.get(Uri.parse(url1));
+  String url1 = "$_url/get_resource_images/?image_path=$imagepath";
+  print(url1);
+  return await http.get(Uri.parse(url1));
 }
 
-Future<Map<String, dynamic>> getSaleResources(
-    int page, String _token) async {
-  //await settingIP();
-  /*
-  String phonenum = args[0];
-  String address = args[1];
-  List<Map<String,String>> fileinfo = args[2];
-   */
+Future<http.Response> fetchGraph(String address, String resource) async {
+  await settingIP2();
+  String url1 = "$_url/get_graph_images/?location=$address&resource=$resource";
+  print(url1);
+  return await http.get(Uri.parse(url1));
+}
+
+Future<Map<String, dynamic>?> Other_Profile(String phonenum) async {
+  await settingIP2();
+  String url1 = "$_url/get_profile/?phonenum=$phonenum";
+  print(url1);
+  String? _token = await storage.read(key: "fastapi_token");
+  try {
+    if(_token != null)
+    {
+      final response = await http.get(
+        Uri.parse(url1),
+        // 헤더에 토큰 추가
+        headers: {
+          'authorization': _token,
+        },
+      );
+
+      if (200 <= response.statusCode && response.statusCode < 300) {
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        return jsonResponse;
+      }
+    }
+
+  } catch (e) {
+    print(e);
+  }
+  return null;
+}
+
+Future<Map<String, dynamic>?> Update_point(String phonenum, int point) async {
+  await settingIP2();
+  String url1 = "$_url/update_point/?phonenum=$phonenum&points=$point";
+  print(url1);
+  String? _token = await storage.read(key: "fastapi_token");
+  try {
+    if(_token != null)
+    {
+      final response = await http.get(
+        Uri.parse(url1),
+        // 헤더에 토큰 추가
+        headers: {
+          'authorization': _token,
+        },
+      );
+
+      if (200 <= response.statusCode && response.statusCode < 300) {
+        Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+        return jsonResponse;
+      }
+    }
+  } catch (e) {
+    print(e);
+  }
+  return null;
+}
+
+Future<bool> success_trans_sale(String _id, String _token) async {
   await settingIP();
-  String temp_url =
-      "https://5fceb3f0-c4e1-48b7-8058-0a3380e608fb.mock.pstmn.io/";
-  //String url1 = url + "/getResources";
-  String url1 = url + "/getResources?page=$page";
+
+  bool check = true;
+
+  String url1 = "$_url/enrollResources1/$_id";
+  print("----------------------enrollResources1-----------------------");
+  print(url1);
+
+  try {
+    http.Response response = await http.get(Uri.parse(url1),
+        headers: {'Content-Type': 'application/json', 'authorization': _token});
+    print(response.statusCode);
+    print(response.body);
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      check = true;
+    }
+  } catch (e) {
+    print(e);
+
+    check = false;
+  }
+
+  return check;
+}
+
+Future<bool> success_trans_buy(String _id, String _token) async {
+  await settingIP();
+
+  bool check = true;
+
+  String url1 = "$_url/enrollResources2/$_id";
+  print("----------------------enrollResources2-----------------------");
+  print(url1);
+
+  late Map<String, String> datas;
+
+  try {
+    http.Response response = await http.get(Uri.parse(url1),
+        headers: {'Content-Type': 'application/json', 'authorization': _token});
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      datas = jsonDecode(utf8.decode(response.bodyBytes));
+    }
+  } catch (e) {
+    print(e);
+    datas = {"status": "false"};
+    check = false;
+  }
+  print(datas);
+
+  return check;
+}
+
+Future<Map<String, dynamic>> getSaleResources(int page, String _token) async {
+  await settingIP();
+
+  String url1 = "$_url/getResources?page=$page";
+
+  print("----------------------getResources-----------------------");
+  print(url1);
+
   late Map<String, dynamic> datas;
   try {
     http.Response response = await http.get(
@@ -445,19 +685,98 @@ Future<Map<String, dynamic>> getSaleResources(
   } catch (e) {
     print(e);
     datas = {
-      "pagination": {"cuurentElement": 0}
+      "body": [],
+      "pagination": {
+        "page": 0,
+        "size": 10,
+        "cuurentElement": 0,
+        "totalpage": 0,
+        "totalElemnet": 0
+      }
     };
   }
+  return datas;
+}
+
+Future<Map<String, dynamic>> getBuyResources(int page, String _token) async {
+  await settingIP();
+
+  String url1 = "$_url/getResources3?page=$page";
+  print("----------------------getResources3-----------------------");
+  print(url1);
+  late Map<String, dynamic> datas;
+  try {
+    http.Response response = await http.get(
+      Uri.parse(url1),
+      headers: {'Content-Type': 'application/json', 'authorization': _token},
+    );
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      datas = jsonDecode(utf8.decode(response.bodyBytes));
+    }
+  } catch (e) {
+    print(e);
+    datas = {
+      "body": [],
+      "pagination": {
+        "page": 0,
+        "size": 10,
+        "cuurentElement": 0,
+        "totalpage": 0,
+        "totalElemnet": 0
+      }
+    };
+  }
+  print(datas);
+
   print(datas["pagination"]);
   return datas;
 }
 
+Future<Map<String, dynamic>> getmyUsage(
+    String phonenum, int page, String _token) async {
+  await settingIP();
+
+  String url1 = "$_url/getMyResources/$phonenum";
+  print("----------------------getMyResources-----------------------");
+  print(url1);
+  late Map<String, dynamic> datas;
+  try {
+    http.Response response = await http.get(
+      Uri.parse(url1),
+      headers: {'Content-Type': 'application/json', 'authorization': _token},
+    );
+
+    print(response.statusCode);
+
+    if (200 <= response.statusCode && response.statusCode < 300) {
+      datas = jsonDecode(utf8.decode(response.bodyBytes));
+    }
+  } catch (e) {
+    print(e);
+    datas = {
+      "api": {
+        "body": [],
+        "pagination": {
+          "page": 0,
+          "size": 10,
+          "cuurentElement": 0,
+          "totalpage": 0,
+          "totalElemnet": 0
+        }
+      }
+    };
+  }
+
+  return datas;
+}
+
+
 Future<void> example() async {
   await settingIP();
-  String url1 = url + "/example";
+  String url1 = "$_url/example";
   late Map example;
 
-  example = {"name": "장태환"};
+  example = {"name": ""};
 
   var body = json.encode(example);
 

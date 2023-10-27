@@ -1,7 +1,9 @@
 import 'package:multi_masked_formatter/multi_masked_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../customlibrary/textanimation.dart';
+import '../main/setting_global.dart';
 import '../server/http_post.dart';
 import '../main/mainpage.dart';
 import '../user/searchpw.dart';
@@ -79,7 +81,8 @@ class _login extends State<login> {
         setState(() {
           isloading = false;
         });
-        Get.offAll(() => mainpage());
+        class_setting.setting(2);
+        Get.offAll(() => mainpage(), arguments: [2]);
       }
       else{ // 로그인 실패 (사유: 서버와의 통신이 좋지 않거나, id나 pw가 맞지 않음)
         setState(() {
@@ -186,7 +189,7 @@ class _login extends State<login> {
           ),
         ),
         body:
-        isloading ? Center(child: BouncingTextAnimation()):
+        isloading ? Container(color: Colors.white,child: Center(child: BouncingTextAnimation()),):
         SafeArea(
             child: Container(
                 color: Colors.white,

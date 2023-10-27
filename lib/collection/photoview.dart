@@ -176,7 +176,7 @@ class _ImageGalleryState extends State<ImageGallery>{
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('상세 정보', style: TextStyle(fontFamily: "HanB"), textScaleFactor: 1,),
+          title: const Text('상세 정보', style: TextStyle(fontFamily: "HanB"), textScaleFactor: 1,),
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,

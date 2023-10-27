@@ -1,3 +1,4 @@
+import 'package:ecocycle/main/setting_global.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -48,14 +49,19 @@ class _editmy extends State<editmy> {
   }
 
   Future<void> logout() async {
-    await storage.delete(key: 'salepage');
-    await storage.delete(key: 'buypage');
     await storage.delete(key: 'login');
     await storage.delete(key: 'token');
     await storage.delete(key: 'userdata');
     await storage.delete(key: 'address');
+
+    await storage.delete(key: 'salepage');
+    await storage.delete(key: 'buypage');
     await storage.delete(key: 'transnum');
-    Get.offAll(readypage());
+
+    await storage.delete(key: 'MallLike');
+    await storage.delete(key: 'addressnum');
+    class_setting.setting(2);
+    Get.offAll(()=>readypage());
   }
 
   @override
